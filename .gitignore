@@ -1,0 +1,22 @@
+# data files
+
+*.xlsx
+*.csv
+*.smi
+data/
+building_blocks/
+
+# outputs
+*.svg
+tests/
+output/
+
+# other
+*.vscode
+*.zip
+__pycache__
+.idea/
+doc/
+
+# temporary block till later setup
+AIRepositories/
