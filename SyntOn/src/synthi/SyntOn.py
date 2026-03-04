@@ -21,6 +21,8 @@ from pathlib import Path
 
 
 class synthon:
+    """ Full implementation of synthon class, with graph relationshop information, which isnt fully required for Vsynthes purposes
+    """
     def __init__(self, smiles, cutLevel=1, directParent=None, directChildren=None, syntheticPathway=None, SynthLibProvided=False):
         self.smiles = smiles
         pat = re.compile(r"\[\w*:\w*\]")
@@ -41,7 +43,7 @@ class synthon:
         self.AtomNumbers = 0
         self.bbAnalogues = {}
         self.bivalentN = False
-        self.SynthLibProvided = SynthLibProvided
+        self.SynthLibProvided = SynthLibProvided # bool
         self.rIdsToGetIt = []
 
     def searchForSynthonAnalogues(self, synthLib: dict, simTh=-1):
