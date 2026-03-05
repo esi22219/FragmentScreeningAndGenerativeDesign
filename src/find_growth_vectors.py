@@ -2,23 +2,24 @@
 # Geometry-first exit identification with virtual roles (V-SYNTHES style)
 # type: ignore
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import List, Tuple, Optional, Dict
-import os, tempfile, html, numpy as np
+import argparse, sys
+from typing import List, Tuple, Optional
+import os, tempfile, numpy as np
 from pathlib import Path
 from data_models import ExitCandidate, ExitRole, RSite
 from drawing import visualize_rsites
 from rdkit import Chem
 from rdkit.Chem import AllChem, rdMolDescriptors
 
-# Optional: PyVOL for pocket surface/vertex normals
+
+# PyVOL for pocket surface/vertex normals
 import pyvol
 from pyvol.spheres import Spheres
 
-# Optional: Vina/Meeko for in-memory cap-probe docking
+# Vina/Meeko for cap-probe docking
 try:
     from vina import Vina
-    from meeko import MoleculePreparation, PDBQTWriterLegacy, Polymer, ReceptorPreparation, ReceptorWriterLegacy
+    #from meeko import MoleculePreparation, PDBQTWriterLegacy, Polymer, ReceptorWriterLegacy
     HAVE_DOCK = True
 except Exception:
     HAVE_DOCK = False
@@ -77,7 +78,7 @@ def protein_heavy_xyz(protein_pdb: str) -> np.ndarray:
     return np.asarray(xyz, dtype=float)
 
 
-# --------------------------- Virtual role assignment ---------------------------
+# virtual role assignment
 
 def assign_virtual_role(m: Chem.Mol, atom_idx: int) -> Optional[ExitRole]:
     """A: Aromatic sp2 C; B: aliphatic sp3 C; C: heteroatom (N/O/S with LP); D: heteroaromatic C–H (Minisci-like)"""
@@ -103,7 +104,7 @@ def assign_virtual_role(m: Chem.Mol, atom_idx: int) -> Optional[ExitRole]:
     return None
 
 
-# --------------------------- Candidate generation (geometry) ---------------------------
+# candidate generation (geometry)
 
 def nearest_pocket_vector(atom_xyz: np.ndarray, verts: np.ndarray) -> Tuple[np.ndarray, float, int]:
     diffs = verts - atom_xyz
@@ -171,7 +172,7 @@ def raycast_steric_ok(protein_xyz: np.ndarray, start: np.ndarray, direction: np.
     return True
 
 
-# --------------------------- Optional: cap-probe docking to confirm pocket space ---------------------------
+# cap-probe docking to confirm pocket space UNFINISHED
 
 def rdkit_to_pdbqt_string(mol3d: Chem.Mol) -> str:
     prep = MoleculePreparation()
@@ -184,14 +185,14 @@ def rdkit_to_pdbqt_string(mol3d: Chem.Mol) -> str:
         chunks.append(s)
     return ''.join(chunks)
 
-def receptor_pdb_to_pdbqt_string(pdb_text: str) -> str:
-    polymer = Polymer.from_pdb_string(pdb_text)
-    rprep = ReceptorPreparation(polymer)
-    rsetup = rprep.prepare()
-    s, ok, msg = ReceptorWriterLegacy.write_string(rsetup)
-    if not ok:
-        raise RuntimeError(msg)
-    return s
+# def receptor_pdb_to_pdbqt_string(pdb_text: str) -> str:
+#     polymer = Polymer.from_pdb_string(pdb_text)
+#     rprep = ReceptorPreparation(polymer)
+#     rsetup = rprep.prepare()
+#     s, ok, msg = ReceptorWriterLegacy.write_string(rsetup)
+#     if not ok:
+#         raise RuntimeError(msg)
+#     return s
 
 def vina_cap_probe_energy(protein_pdb: str, lig: Chem.Mol, exit_atom_idx: int,
                           box_center: Tuple[float,float,float], box_size: Tuple[float,float,float]=(20,20,20)) -> Optional[float]:
@@ -255,7 +256,7 @@ def read_sdf_first_mol(sdf:Path):
     else:
         return None
 
-# --------------------------- Orchestrator ---------------------------
+# Main Entrypoint/Orchestrator
 
 def find_exit_sites(protein_pdb: str,
                     ligand: Chem.Mol,
@@ -310,9 +311,7 @@ def find_exit_sites(protein_pdb: str,
     return cands, labels
 
 if __name__ == "__main__":
-    import argparse, sys
-    from rdkit import Chem
-    from rdkit.Chem import AllChem
+
 
     parser = argparse.ArgumentParser(
         description="V‑SYNTHES‑style exit site identification (geometry‑first + virtual roles)."
